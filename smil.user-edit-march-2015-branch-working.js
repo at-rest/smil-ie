@@ -21,6 +21,7 @@
 /*
 Copyright 2008 David Leunen
 Copyright 2012 Helder Magalhaes
+Copyright 2014 Trevor Rees
 */
 
 /**
@@ -233,6 +234,7 @@ Animator.prototype = {
     getCurVal: function () {
         if (this.attributeType == "CSS") {
             // should use this.target.getPresentationAttribute instead
+            // getPropertyValue for >ie9
             return this.target.style.getPropertyValue(this.attributeName);
         } else {
             //var animAtt = this.target[this.attributeName];
@@ -1216,22 +1218,25 @@ function toRGB(color) {
     }
 
     if (color.substring(0, 3) !== "rgb" && color.charAt(0) !== "#") {
+        var get_color = document.documentElement.getElementById("smil-ie-g_colour");
+        if (get_color === null) {
+            get_color = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                // ? use timestamp to ensure id is unique
+                get_color.setAttribute("id", "smil-ie-g_colour");
+                document.documentElement.appendChild(get_color);
+                get_color = document.documentElement.getElementById("smil-ie-g_colour");}
+
         if (getComputedStyle !== 'undefined') {
             // style must be assigned to live element and be a CSS value ie fill does not work
-            var g_color = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            // ? use timestamp to ensure id is unique
-            g_color.setAttribute("id", "smil-ie-g_colour");
-            document.documentElement.appendChild(g_color);
-            g_color = document.documentElement.getElementById("smil-ie-g_colour");
-            g_color.style.color = color;
-            color = getComputedStyle(g_color, null).getPropertyValue("color");
+            get_color.style.color = color;
+            color = getComputedStyle(get_color, null).getPropertyValue("color");
         }
-        // ? ie8 - doesn't suport getComputedStyle but does not natively support SVG
-        // else {
-        //     g_color = this.attributeName.currentStyle["color"];
-        //    color = rgb;
-    }
 
+    }
+    // ? ie8 - doesn't suport getComputedStyle but does not natively support SVG - ?ASV
+    // else {
+    //     get_color = this.attributeName.currentStyle["color"];
+    //    color = rgb;
 
     // RGB color
     if (color.substring(0, 3) == "rgb") {
@@ -1366,6 +1371,8 @@ var propDefaults = {
     "text-anchor": "start",
     "writing-mode": "lr-tb"
 };
+
+// ? colsure ?? what purpose? ? general factory closure generator ?
 
 function funk(func, obj, arg) {
     return function () {
